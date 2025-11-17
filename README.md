@@ -6,22 +6,22 @@ This activity was developed using a Mac in 11/2025. It may work in the future, o
 
 # 0. Setup IDE / project
 
-* Fork the repo: https://github.com/shilad/ds-456-codex-activity in GitHub
-* Download and install VS Code https://code.visualstudio.com/
+* Fork the [Codex Activity](https://github.com/shilad/ds-456-codex-activity) in GitHub
+* Download and install [VS Code](https://code.visualstudio.com/)
 * Clone your fork (not the original!) to your computer
-* If you are going to use R (not Python) download and install the (VSCode R extension)[https://marketplace.visualstudio.com/items?itemName=reditorsupport.r]
+* If you are going to use R (not Python) download and install the [VSCode R extension](https://marketplace.visualstudio.com/items?itemName=reditorsupport.r)
 
 
 # 1. Create an assignment skeleton
 
-Copy this `README.md` to `Codex_Activity.md`.
-Add your name and your partners' name to this assignment.
-You will add your answer to the questions marked **Task:** below and commit this activity to GitHub.
+* Copy this `README.md` to `Codex_Activity.md`.
+* Add your name and your partners' name to this assignment.
+* You will add your answer to the questions marked **Task:** below and commit this activity to GitHub.
 
 
 # 1. Setup Codex
-* Install the (Codex VSCode IDE Extension)[https://developers.openai.com/codex/ide/]
-* Click "Use API Key" in the Codex side bar, and use the API key shilad provided to you.
+* Install the [Codex VSCode IDE Extension](https://developers.openai.com/codex/ide/)
+* Click "Use API Key" in the Codex side bar, and use the API key Shilad gave you. **DO NOT PUT THIS KEY ANYWHERE IN YOUR GITHUB REPO.**
 * In the settings for Codex (gear icon in the upper right of the Codex tab), select Codex settings -> Open `config.toml` and set it to this:
     ```toml
     model = "gpt-5.1"
