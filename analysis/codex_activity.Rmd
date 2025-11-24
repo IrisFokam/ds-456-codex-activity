@@ -1,0 +1,222 @@
+---
+title: "On-Sale Liquor Licenses: Codex Activity"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+## Research Question
+
+In this short analysis, we investigate:
+
+- How the proportions of on-sale liquor license statuses (Approved, Pending, and other statuses) vary across Minneapolis neighborhoods and wards in the most recent year of data.
+
+## Load Packages and Data
+
+```{r libraries-and-data}
+# Load core tidyverse for data wrangling and plotting
+library(tidyverse)
+
+# lubridate helps with parsing and working with dates
+library(lubridate)
+
+# Read the liquor license data from the data folder
+liquor <- read_csv("../data/On_Sale_Liquor.csv", show_col_types = FALSE)
+```
+
+## Basic Structure and Missingness
+
+```{r structure}
+# Inspect the overall structure: rows, columns, and types
+glimpse(liquor)
+
+# Quick summaries of each variable
+summary(liquor)
+```
+
+```{r missingness}
+# Count missing values per column
+missing_summary <- liquor %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "variable",
+    values_to = "n_missing"
+  ) %>%
+  arrange(desc(n_missing))
+
+missing_summary
+```
+
+## Prepare Variables for Analysis
+
+```{r prepare}
+liquor <- liquor %>%
+  mutate(
+    # Parse key date columns; invalid or missing values become NA
+    issueDate      = ymd_hms(issueDate, quiet = TRUE),
+    expirationDate = ymd_hms(expirationDate, quiet = TRUE),
+    lastUpdateDate = ymd_hms(lastUpdateDate, quiet = TRUE),
+    # Treat missing categorical values explicitly as "Unknown"
+    licenseStatus  = fct_explicit_na(licenseStatus, na_level = "Unknown"),
+    licenseType    = fct_explicit_na(licenseType, na_level = "Unknown"),
+    neighborhood   = fct_explicit_na(neighborhood, na_level = "Unknown")
+  )
+```
+
+## License Status by Neighborhood and Ward
+
+```{r status-by-neighborhood}
+# Proportions of license statuses by neighborhood
+status_by_neighborhood <- liquor %>%
+  group_by(neighborhood, licenseStatus) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  mutate(prop = n / sum(n))
+
+status_by_neighborhood
+```
+
+```{r plot-status-neighborhood, fig.height=6, fig.width=8}
+# Plot the distribution of statuses for the top 10 neighborhoods by total licenses
+top_neighborhoods <- liquor %>%
+  count(neighborhood, sort = TRUE) %>%
+  slice_head(n = 10) %>%
+  pull(neighborhood)
+
+status_by_neighborhood %>%
+  filter(neighborhood %in% top_neighborhoods) %>%
+  ggplot(aes(x = neighborhood, y = prop, fill = licenseStatus)) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Proportion of License Statuses by Neighborhood (Top 10)",
+    x = "Neighborhood",
+    y = "Proportion of Licenses",
+    fill = "License Status"
+  ) +
+  theme_minimal()
+```
+
+```{r status-by-ward}
+# Proportions of license statuses by ward
+status_by_ward <- liquor %>%
+  group_by(ward, licenseStatus) %>%
+  summarise(n = n(), .groups = "drop_last") %>%
+  mutate(prop = n / sum(n))
+
+status_by_ward
+```
+
+```{r plot-status-ward, fig.height=4, fig.width=7}
+status_by_ward %>%
+  ggplot(aes(x = factor(ward), y = prop, fill = licenseStatus)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Proportion of License Statuses by Ward",
+    x = "Ward",
+    y = "Proportion of Licenses",
+    fill = "License Status"
+  ) +
+  theme_minimal()
+```
+
+## Additional Descriptive Visualizations
+
+```{r licenses-by-type, fig.height=4, fig.width=7}
+# Distribution of licenses by license type
+liquor %>%
+  count(licenseType, sort = TRUE) %>%
+  mutate(licenseType = fct_reorder(licenseType, n)) %>%
+  ggplot(aes(x = licenseType, y = n)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "On-Sale Liquor Licenses by License Type",
+    x = "License Type",
+    y = "Number of Licenses"
+  ) +
+  theme_minimal()
+```
+
+```{r licenses-by-year, fig.height=4, fig.width=7}
+# New licenses over time (by issue year), excluding missing dates
+liquor %>%
+  filter(!is.na(issueDate)) %>%
+  mutate(issue_year = year(issueDate)) %>%
+  count(issue_year) %>%
+  ggplot(aes(x = issue_year, y = n)) +
+  geom_col(fill = "darkorange") +
+  labs(
+    title = "New On-Sale Liquor Licenses by Issue Year",
+    x = "Issue Year",
+    y = "Number of New Licenses"
+  ) +
+  theme_minimal()
+```
+
+## Mapping the Licenses
+
+```{r map-basic, fig.height=6, fig.width=6}
+# Basic point map of licenses using latitude and longitude
+liquor_points <- liquor %>%
+  filter(!is.na(lat), !is.na(long))
+
+ggplot(liquor_points, aes(x = long, y = lat)) +
+  geom_point(alpha = 0.6, size = 1.8, color = "steelblue") +
+  coord_quickmap() +
+  labs(
+    title = "On-Sale Liquor Licenses in Minneapolis",
+    x = "Longitude",
+    y = "Latitude"
+  ) +
+  theme_minimal()
+```
+
+```{r map-by-status, fig.height=6, fig.width=6}
+# Map colored by license status to highlight spatial patterns
+ggplot(liquor_points, aes(x = long, y = lat, color = licenseStatus)) +
+  geom_point(alpha = 0.7, size = 1.8) +
+  coord_quickmap() +
+  labs(
+    title = "On-Sale Liquor Licenses by Status",
+    x = "Longitude",
+    y = "Latitude",
+    color = "License Status"
+  ) +
+  theme_minimal()
+```
+
+
+## One shot code from Codex
+```{r}
+read_csv("data/On_Sale_Liquor.csv", show_col_types = FALSE) %>%
+  mutate(
+    licenseStatus = fct_explicit_na(licenseStatus, na_level = "Unknown"),
+    neighborhood  = fct_explicit_na(neighborhood,  na_level = "Unknown")
+  ) %>%
+  group_by(neighborhood) %>%
+  summarise(
+    total_licenses   = n(),
+    pending_licenses = sum(licenseStatus == "Pending"),
+    pending_share    = pending_licenses / total_licenses,
+    .groups = "drop"
+  ) %>%
+  # Optional: focus on neighborhoods with at least 5 licenses
+  filter(total_licenses >= 5) %>%
+  arrange(desc(pending_share))
+
+```
+
+

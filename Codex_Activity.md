@@ -157,8 +157,9 @@ What do you notice about this early interaction? Consider:
 **Task 6.2 (in `Codex_Activity.md`):**
 
 - Write down your final research question in one clear sentence.
-
+  Are there particular neighborhoods where Pending licenses make up an unusually high share of all on-sale liquor licenses in Minneapolis?
 - In 2–3 sentences, explain why you chose it (and why you rejected other candidates).
+  This question specifically states what we are interested in, and it defines the scope of the research as well. The others were not as intersting in terms of research area, and not as impactful in my opinion as the status of liquor licenses.
 
 # 7. Answering your question with Codex: one-shot vs. plan-first
 
