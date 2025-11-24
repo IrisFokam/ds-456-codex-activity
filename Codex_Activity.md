@@ -177,7 +177,9 @@ What do you notice about this early interaction? Consider:
 **Task 7.1 (in `Codex_Activity.md`):**
 
 - Briefly describe what analysis Codex performed and what results you obtained.
+  Codex named missing values as unknown, and did some wrangling to obtain summaries about the numbers and proportions of the different licenses types.
 - What was good or bad about this one-shot attempt (data used, methods, code quality, clarity)?
+  It was straightforward which is good, and it let the user find the answer for themselves from the table it created. I however did not try to explicitly answer the question as I still need to look for myself. It could have created a filter for neighborhoods with unusually high proportions for example.
 
 ## 7.2 Plan-first interaction
 
@@ -193,15 +195,20 @@ What do you notice about this early interaction? Consider:
 **Task 7.2 (in `Codex_Activity.md`):**
 
 - Briefly describe the main steps in your final plan and what you implemented for each.
+  The step approach involves specifing clearer time boundaries, and defining some key terms such as "unusually high". It also involves cleaning the data by filtereing the prefered time, dealing with missingness and computing neighborhood levels, then visualizing and interpreting the neighborhoods with high proportions.
 - How did the planned interaction differ from the one-shot attempt?
+  The planned interaction gave more structure to the analysis approach, and made the process easier to follow up as it was broken down. It also accounts more things not explicitly stated in the research question such as the timeline and level of "unuusally high".
 - Which approach produced better code, and which felt more controllable?
+  The planned approach is better as it makes the process more reproducible and easier to understand.
 
 ## 7.3 Final reflection
 
 **Task 7.3 (in `Codex_Activity.md`):**
 
 - When would you choose one-shot prompting vs. plan-first prompting for future projects?
+  For future projects, I think the planned approach is good at the start of the project, to adequately break it down into easier to follow processes. If the project is big enough such that the steps are still quite bulky, it would be a possibility to use the one shot to approach the different steps.
 - What norms or habits do you want to adopt for working with tools like Codex in your own data science work?
+  I want to develope the habit of having a clear purpose in mind, and use the Codex to help me develope that purpose with more efficiency and speed than I would on my own.
 
 # 8. What to hand in
 

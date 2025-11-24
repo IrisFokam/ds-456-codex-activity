@@ -201,7 +201,9 @@ ggplot(liquor_points, aes(x = long, y = lat, color = licenseStatus)) +
 
 ## One shot code from Codex
 ```{r}
-read_csv("data/On_Sale_Liquor.csv", show_col_types = FALSE) %>%
+# Quick one-shot summary of Pending share by neighborhood
+# Note: path is relative to the analysis/ folder
+read_csv("../data/On_Sale_Liquor.csv", show_col_types = FALSE) %>%
   mutate(
     licenseStatus = fct_explicit_na(licenseStatus, na_level = "Unknown"),
     neighborhood  = fct_explicit_na(neighborhood,  na_level = "Unknown")
@@ -218,5 +220,123 @@ read_csv("data/On_Sale_Liquor.csv", show_col_types = FALSE) %>%
   arrange(desc(pending_share))
 
 ```
+
+## Detailed analysis: Pending share by neighborhood
+
+### Step one, define scope and “unusually high”
+```{r pending-scope}
+# Create an issue year variable from the parsed issueDate
+liquor <- liquor %>%
+  mutate(issue_year = year(issueDate))
+
+# Inspect how many licenses we have by year
+issue_year_counts <- liquor %>%
+  count(issue_year)
+
+issue_year_counts
+
+# Identify the most recent year with data
+most_recent_year <- issue_year_counts %>%
+  filter(!is.na(issue_year)) %>%
+  summarise(most_recent_year = max(issue_year)) %>%
+  pull(most_recent_year)
+
+most_recent_year
+```
+
+### Step 2: Clean and prepare the data
+```{r pending-prepare}
+# Restrict to licenses issued in the most recent year
+# and drop Unknown neighborhoods for this neighborhood-level question
+liquor_recent <- liquor %>%
+  filter(issue_year == most_recent_year) %>%
+  filter(neighborhood != "Unknown")
+
+glimpse(liquor_recent)
+```
+
+### Step 3: Compute neighborhood-level Pending shares
+```{r pending-citywide}
+# Citywide Pending share in the most recent year
+citywide_pending <- liquor_recent %>%
+  summarise(
+    total_licenses   = n(),
+    pending_licenses = sum(licenseStatus == "Pending", na.rm = TRUE),
+    pending_share    = pending_licenses / total_licenses
+  )
+
+citywide_pending
+
+citywide_share <- citywide_pending$pending_share
+```
+
+```{r pending-neighborhood}
+# Neighborhood-level totals and Pending shares,
+# keeping only neighborhoods with at least 5 licenses
+neighborhood_pending <- liquor_recent %>%
+  group_by(neighborhood) %>%
+  summarise(
+    total_licenses   = n(),
+    pending_licenses = sum(licenseStatus == "Pending", na.rm = TRUE),
+    pending_share    = pending_licenses / total_licenses,
+    .groups = "drop"
+  ) %>%
+  filter(total_licenses >= 5)
+
+neighborhood_pending
+```
+
+### Step 4: Identify and visualize “high-pending” neighborhoods
+```{r pending-visual, fig.height=5, fig.width=8}
+# Flag neighborhoods where Pending share is above the citywide share
+high_pending_neighborhoods <- neighborhood_pending %>%
+  mutate(
+    above_citywide = pending_share > citywide_share,
+    diff_from_city = pending_share - citywide_share
+  ) %>%
+  arrange(desc(pending_share))
+
+high_pending_neighborhoods
+
+# Visualize Pending share by neighborhood,
+# highlighting those above the citywide share
+neighborhood_pending %>%
+  mutate(
+    neighborhood   = fct_reorder(neighborhood, pending_share),
+    above_citywide = pending_share > citywide_share
+  ) %>%
+  ggplot(aes(x = neighborhood, y = pending_share, fill = above_citywide)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_manual(
+    values = c("FALSE" = "grey70", "TRUE" = "tomato"),
+    name   = "Above citywide\nPending share?"
+  ) +
+  labs(
+    title = paste0(
+      "Pending License Share by Neighborhood (", most_recent_year, ")"
+    ),
+    subtitle = paste0(
+      "Citywide Pending share = ",
+      scales::percent(citywide_share, accuracy = 0.1)
+    ),
+    x = "Neighborhood",
+    y = "Pending share of licenses"
+  ) +
+  theme_minimal()
+```
+
+### Step 5: Interpret and report findings (code-supported)
+```{r pending-top-neighborhoods}
+# Table of the top neighborhoods by Pending share
+top_high_pending <- high_pending_neighborhoods %>%
+  slice_max(order_by = pending_share, n = 10)
+
+top_high_pending
+```
+
+
+
 
 
